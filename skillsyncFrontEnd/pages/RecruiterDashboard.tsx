@@ -167,10 +167,6 @@ export const RecruiterDashboard: React.FC<{ user: User }> = ({ user }) => {
                     <div className="text-3xl font-bold text-primary">{jobs.length}</div>
                     <div className="text-gray-500">Active Jobs</div>
                 </Card>
-                <Card className="flex items-center gap-4 border-l-4 border-secondary">
-                    <div className="text-3xl font-bold text-yellow-600">{jobs.reduce((acc, job) => acc + (job.applicantsCount || 0), 0)}</div>
-                    <div className="text-gray-500">Total Applicants</div>
-                </Card>
             </div>
 
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -198,6 +194,7 @@ export const RecruiterDashboard: React.FC<{ user: User }> = ({ user }) => {
                                         <tr>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job Title</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applicants</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Posted Date</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                         </tr>
@@ -211,6 +208,13 @@ export const RecruiterDashboard: React.FC<{ user: User }> = ({ user }) => {
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <Badge status={job.status} />
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-bold text-primary bg-primary/10 px-2 py-1 rounded-full">
+                                                            {job.applicantsCount || 0}
+                                                        </span>
+                                                    </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(job.postedDate).toLocaleDateString()}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

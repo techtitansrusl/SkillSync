@@ -21,11 +21,24 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
                     select: { companyName: true }
                 },
                 qualifications: true,
-                skills: true
+                skills: true,
+                _count: {
+                    select: { cvs: true }
+                }
             },
             orderBy: { postedDate: 'desc' }
         });
-        res.json(jobs);
+
+        // Map _count.cvs to applicantsCount for frontend compatibility
+        const jobsWithCount = jobs.map(job => {
+            const { _count, ...jobData } = job;
+            return {
+                ...jobData,
+                applicantsCount: _count?.cvs || 0
+            };
+        });
+
+        res.json(jobsWithCount);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to fetch jobs' });
@@ -86,12 +99,21 @@ export const getJobById = async (req: Request, res: Response) => {
             include: {
                 recruiter: { select: { companyName: true, user: { select: { name: true, email: true } } } },
                 qualifications: true,
-                skills: true
+                skills: true,
+                _count: {
+                    select: { cvs: true }
+                }
             }
         });
         if (!job) return res.status(404).json({ error: 'Job not found' });
 
-        res.json(job);
+        const { _count, ...jobData } = job;
+        const jobWithCount = {
+            ...jobData,
+            applicantsCount: _count?.cvs || 0
+        };
+
+        res.json(jobWithCount);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch job' });
     }
