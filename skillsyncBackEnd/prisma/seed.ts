@@ -54,9 +54,10 @@ async function main() {
         });
 
         // Create Job (Optional: only if no jobs exist)
+        let job = null;
         const jobCount = await prisma.job.count();
         if (jobCount === 0) {
-            const job = await prisma.job.create({
+            job = await prisma.job.create({
                 data: {
                     title: 'Frontend Developer',
                     recruiterId: recruiterUser.id,
