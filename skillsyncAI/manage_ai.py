@@ -8,14 +8,18 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
 
-from models.embeddings import EmbeddingModel
-from models.scoring import cosine_similarity
-from nlp.feature_extraction import calculate_skill_overlap, calculate_experience_gap
+from ai_engine import (
+    EmbeddingModel, 
+    cosine_similarity, 
+    calculate_skill_overlap, 
+    calculate_experience_gap
+)
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
-MODEL_DIR = BASE_DIR / "models"
-MODEL_DIR.mkdir(exist_ok=True)
+BASE_DIR = Path(__file__).resolve().parent
+DATA_DIR = BASE_DIR / "data"
+# MODEL_DIR is now DATA_DIR to simplify
 
 
 def build_training_pairs():
@@ -121,7 +125,7 @@ def train_model(limit: int = None):
     print("\nClassification report:")
     print(classification_report(y_test, y_pred))
 
-    model_path = MODEL_DIR / "trained_classifier.pkl"
+    model_path = DATA_DIR / "trained_classifier.pkl"
     
     # Save a dictionary with metadata to ensure the app knows how to use this model
     model_data = {

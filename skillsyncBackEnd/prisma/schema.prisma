@@ -6,8 +6,19 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+enum Role {
+  RECRUITER
+  APPLICANT
+}
+
+enum JobStatus {
+  ACTIVE
+  CLOSED
+  DRAFT
 }
 
 model User {
@@ -15,7 +26,7 @@ model User {
   name      String
   email     String   @unique
   password  String
-  role      String   // 'APPLICANT' | 'RECRUITER'
+  role      Role     // 'APPLICANT' | 'RECRUITER'
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -53,7 +64,7 @@ model Job {
   description String?
   location    String?
   postedDate  DateTime @default(now()) @map("posted_date")
-  status      String   @default("ACTIVE") // 'ACTIVE' | 'CLOSED' | 'DRAFT'
+  status      JobStatus @default(ACTIVE) // 'ACTIVE' | 'CLOSED' | 'DRAFT'
 
   recruiter      Recruiter          @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
   qualifications JobQualification[]

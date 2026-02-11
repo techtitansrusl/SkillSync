@@ -6,29 +6,31 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List
 
-from models.embeddings import EmbeddingModel
-from models.scoring import cosine_similarity
-from nlp.text_extraction import extract_text_from_pdf
-from nlp.feature_extraction import calculate_skill_overlap, calculate_experience_gap
+from ai_engine import (
+    EmbeddingModel, 
+    cosine_similarity, 
+    extract_text_from_pdf,
+    calculate_skill_overlap, 
+    calculate_experience_gap,
+    ExplainabilityEngine,
+    BiasMitigator
+)
 
 app = FastAPI(title="SkillSync AI Service")
 
 BASE_DIR = Path(__file__).resolve().parent
-MODEL_PATH = BASE_DIR / "models" / "trained_classifier.pkl"
+MODEL_PATH = BASE_DIR / "data" / "trained_classifier.pkl"
 
-# Load Sentence-BERT once at service startup
+# Load S-BERT once at service startup (Context-aware matching requirement)
 embedding_model = EmbeddingModel()
 
-# Load trained classifier (logistic regression) if available
+# Load trained classifier (Logistic Regression) - SDS requirement
 classifier = None
 if MODEL_PATH.exists():
     saved = joblib.load(MODEL_PATH)
-    saved = joblib.load(MODEL_PATH)
-    # Handle both old (dict with 'classifier' key only) and new (metadata rich) formats
     if isinstance(saved, dict):
         classifier = saved.get("classifier")
     else:
-        # Fallback if it was saved directly as the object (unlikely based on previous code but safe)
         classifier = saved
     print("Loaded trained classifier from", MODEL_PATH)
 else:
@@ -92,23 +94,19 @@ def process_job(req: ProcessJobRequest):
             # 3. Experience Gap
             exp_gap = calculate_experience_gap(cv_text, req.job_description_text)
 
-            # base score from cosine similarity, mapped to [0, 100]
+            # base score from cosine similarity [0, 100]
             base_score = (sim + 1.0) * 50.0
 
             if classifier is not None:
-                # classifier was trained on [sim, skill_overlap, exp_gap]
                 X = np.array([[sim, skill_overlap, exp_gap]])
                 prob_shortlist = float(classifier.predict_proba(X)[0, 1])
                 model_score = (base_score + prob_shortlist * 100.0) / 2.0
-                explanation = (
-                    f"Sim: {sim:.2f}, Skills: {skill_overlap:.2f}, Gap: {exp_gap} yrs -> Shortlist Prob: {prob_shortlist:.2f}"
-                )
             else:
                 model_score = base_score
-                explanation = (
-                    f"Similarity score {model_score:.2f} computed using Sentence-BERT "
-                    f"between the CV content and the job description."
-                )
+
+            # Alignment: Fairness & Explainability requirements
+            model_score = BiasMitigator.check_fairness(model_score, cv_text)
+            explanation = ExplainabilityEngine.generate_explanation(cv_text, req.job_description_text, model_score)
 
         results_raw.append(
             {

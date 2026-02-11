@@ -2,11 +2,8 @@
 REM Activate venv
 call .venv\Scripts\activate.bat
 
-REM Build training pairs
-python build_training_pairs.py
-
-REM Train model
-python train_model.py
+REM Build and Train using manage_ai.py CLI
+python manage_ai.py all
 
 echo Done. Press any key to exit.
 pause
