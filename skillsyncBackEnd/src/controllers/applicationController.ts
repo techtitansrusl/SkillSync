@@ -12,6 +12,18 @@ export const submitCv = async (req: AuthRequest, res: Response) => {
     if (!req.file) return res.status(400).json({ error: 'No CV file uploaded' });
 
     try {
+        // Check for existing application
+        const existingCv = await prisma.cv.findFirst({
+            where: {
+                applicantId,
+                jobId
+            }
+        });
+
+        if (existingCv) {
+            return res.status(400).json({ error: 'You have already applied for this job' });
+        }
+
         // Normalize path
         const fileUrl = `/uploads/cvs/${req.file.filename}`;
 

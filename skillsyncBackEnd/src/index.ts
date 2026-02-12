@@ -9,6 +9,7 @@ import authRoutes from './routes/auth';
 import jobRoutes from './routes/jobs';
 import applicationRoutes from './routes/applications';
 import aiRoutes from './routes/ai';
+import logger from './utils/logger';
 
 dotenv.config();
 console.log('Environment variables loaded:', {
@@ -22,7 +23,7 @@ export const prisma = new PrismaClient();
 
 app.use(cors());
 app.use(helmet());
-app.use(morgan('dev'));
+app.use(morgan('combined', { stream: { write: (message) => logger.info(message.trim()) } }));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
@@ -37,7 +38,7 @@ app.use('/applications', applicationRoutes);
 app.use('/ai', aiRoutes);
 
 app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+    logger.info(`Server is running on port ${port}`);
 });
 
 // Force process to stay alive (should be handled by listen, but adding as fallback)

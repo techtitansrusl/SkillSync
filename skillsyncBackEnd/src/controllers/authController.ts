@@ -6,24 +6,7 @@ import { prisma } from '../index';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
-// In-memory store for session persistence during database connection issues
-const mockUserStore = new Map<string, { name: string, role: string }>();
-
 export const register = async (req: Request, res: Response) => {
-    const { name, email, password, role, companyName } = req.body;
-
-    console.log("Register bypass hit for:", email);
-
-    // Save to mock store
-    if (email) {
-        mockUserStore.set(email, { name: name || 'Test User', role: role || 'APPLICANT' });
-    }
-
-    const token = jwt.sign({ id: 'mock-user-id-' + Date.now(), email: email || 'test@example.com', role: role || 'APPLICANT' }, JWT_SECRET, { expiresIn: '1h' });
-    return res.status(201).json({ token, user: { id: 'mock-user-id', name: name || 'Test User', email: email || 'test@example.com', role: role || 'APPLICANT' } });
-};
-
-const originalRegister = async (req: Request, res: Response) => {
     const { name, email, password, role, companyName } = req.body;
     try {
         const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -71,25 +54,6 @@ const originalRegister = async (req: Request, res: Response) => {
 };
 
 export const login = async (req: Request, res: Response) => {
-    const { email, password } = req.body;
-
-    console.log("Login bypass hit for:", email);
-
-    // Check mock store (require registration)
-    const mockUser = mockUserStore.get(email);
-
-    if (!mockUser) {
-        console.warn("Login attempt failed: Email not registered in temporary store:", email);
-        return res.status(401).json({ error: 'Invalid credentials. Please make sure you have signed up first.' });
-    }
-
-    const { name, role } = mockUser;
-
-    const token = jwt.sign({ id: 'mock-session-id-' + Date.now(), email: email || 'admin@test.com', role }, JWT_SECRET, { expiresIn: '1h' });
-    return res.json({ token, user: { id: 'mock-session-id', name, email, role } });
-};
-
-const originalLogin = async (req: Request, res: Response) => {
     const { email, password } = req.body;
     try {
         const user = await prisma.user.findUnique({ where: { email } });

@@ -1,6 +1,9 @@
 from pathlib import Path
 import joblib
 import numpy as np
+import logging
+from logging.handlers import RotatingFileHandler
+import os
 
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -24,6 +27,24 @@ MODEL_PATH = BASE_DIR / "data" / "trained_classifier.pkl"
 # Load S-BERT once at service startup (Context-aware matching requirement)
 embedding_model = EmbeddingModel()
 
+# Centralized Logging Setup
+LOG_DIR = Path("d:/SkillSync/logs")
+if not LOG_DIR.exists():
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+log_path = LOG_DIR / 'ai_service.log'
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        RotatingFileHandler(log_path, maxBytes=10*1024*1024, backupCount=5),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger("skillsync-ai")
+
+logger.info("AI Service starting up...")
+
 # Load trained classifier (Logistic Regression) - SDS requirement
 classifier = None
 if MODEL_PATH.exists():
@@ -32,9 +53,9 @@ if MODEL_PATH.exists():
         classifier = saved.get("classifier")
     else:
         classifier = saved
-    print("Loaded trained classifier from", MODEL_PATH)
+    logger.info(f"Loaded trained classifier from {MODEL_PATH}")
 else:
-    print("WARNING: trained classifier not found, falling back to similarity threshold only.")
+    logger.warning("trained classifier not found, falling back to similarity threshold only.")
 
 
 class CVInput(BaseModel):
@@ -72,6 +93,7 @@ def process_job(req: ProcessJobRequest):
     Main endpoint: given one job description and a list of CV PDFs,
     return a ranked shortlist with scores and explanations.
     """
+    logger.info(f"Processing job {req.job_id} with {len(req.cvs)} CVs")
     jd_emb = embedding_model.encode([req.job_description_text])[0]
 
     results_raw = []

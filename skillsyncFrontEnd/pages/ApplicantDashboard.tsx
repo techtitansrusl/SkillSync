@@ -22,13 +22,11 @@ export const ApplicantDashboard: React.FC<{ user: User }> = ({ user }) => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      if (activeTab === 'jobs') {
-        const data = await api.jobs.getAll();
-        setJobs(data);
-      } else {
-        const data = await api.applications.getMyApplications();
-        setApplications(data);
-      }
+      const cvData = await api.applications.getMyApplications();
+      setApplications(cvData);
+
+      const jobData = await api.jobs.getAll();
+      setJobs(jobData);
     } catch (error) {
       console.error("Failed to fetch data", error);
     } finally {
@@ -55,9 +53,10 @@ export const ApplicantDashboard: React.FC<{ user: User }> = ({ user }) => {
       alert("Application Submitted Successfully!");
       setSelectedJob(null);
       setFile(null);
-      // If we were on applications tab, we would refresh, but we return to jobs usually
-    } catch (error) {
-      alert("Failed to submit application");
+      fetchData(); // Refresh to update status
+    } catch (error: any) {
+      const message = error.response?.data?.error || "Failed to submit application";
+      alert(message);
     } finally {
       setUploading(false);
     }
@@ -116,7 +115,11 @@ export const ApplicantDashboard: React.FC<{ user: User }> = ({ user }) => {
                 <h3 className="text-xl font-bold text-gray-900 mb-1">{job.title}</h3>
                 <p className="text-gray-500 text-sm mb-4">{job.company || 'Company'} • {job.location}</p>
                 <p className="text-gray-600 text-sm mb-4 line-clamp-2">{job.description}</p>
-                <Button onClick={() => handleApply(job)} className="w-full">Apply Now</Button>
+                {applications.some(app => app.jobId === job.id) ? (
+                  <Button variant="secondary" className="w-full" disabled>Already Applied</Button>
+                ) : (
+                  <Button onClick={() => handleApply(job)} className="w-full">Apply Now</Button>
+                )}
               </Card>
             ))}
           </div>
@@ -142,6 +145,16 @@ export const ApplicantDashboard: React.FC<{ user: User }> = ({ user }) => {
                 </div>
 
                 <div className="flex items-center gap-6 mt-4 md:mt-0">
+                  <div className="text-right">
+                    <Button
+                      variant="secondary"
+                      onClick={() => window.open(`http://localhost:4000${app.fileUrl}`, '_blank')}
+                      className="flex items-center gap-2"
+                    >
+                      <i className="fa-solid fa-file-pdf"></i>
+                      View CV
+                    </Button>
+                  </div>
                   <div className="text-right">
                     <p className="text-xs text-gray-500 uppercase font-semibold">Status</p>
                     <Badge status={status} />

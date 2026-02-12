@@ -1,0 +1,20 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "d:\\SkillSync\\logs\\.55fb95e33b6ca3f77d0eb52a0a49a50c48a8cf52-audit.json",
+    "files": [
+        {
+            "date": 1770919427386,
+            "name": "d:\\SkillSync\\logs\\backend-error-2026-02-12.log",
+            "hash": "88c383ce5121af49113b1be4b629278cd506e93ca29d6b66edabba22f709563c"
+        },
+        {
+            "date": 1770921424376,
+            "name": "d:\\SkillSync\\logs\\backend-error-2026-02-13.log",
+            "hash": "cb1450d6814e30561ce9fbc4a53035a4aee72f336eed213d393d9829adbb6711"
+        }
+    ],
+    "hashType": "sha256"
+}
