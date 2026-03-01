@@ -45,7 +45,7 @@ export const register = async (req: Request, res: Response) => {
             return user;
         });
 
-        const token = jwt.sign({ id: result.id, email: result.email, role: result.role }, JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ id: result.id, email: result.email, role: result.role }, JWT_SECRET, { expiresIn: '1m' });
         res.status(201).json({ token, user: { id: result.id, name: result.name, email: result.email, role: result.role } });
     } catch (error) {
         console.error("Registration error:", error);
@@ -62,7 +62,7 @@ export const login = async (req: Request, res: Response) => {
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
 
-        const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '1m' });
         res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
     } catch (error) {
         console.error("Login error details:", error);
