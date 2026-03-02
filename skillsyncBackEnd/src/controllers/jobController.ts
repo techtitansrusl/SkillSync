@@ -10,8 +10,11 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
         if (recruiterId) {
             where.recruiterId = recruiterId as string;
         } else {
-            // If fetching for applicant (no specific recruiter), only show active jobs
+            // If fetching for applicant, only show ACTIVE jobs that haven't expired
             where.status = 'ACTIVE';
+            where.expiresAt = {
+                gt: new Date()
+            };
         }
 
         const jobs = await prisma.job.findMany({
@@ -29,16 +32,32 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
             orderBy: { postedDate: 'desc' }
         });
 
-        // Map _count.cvs to applicantsCount for frontend compatibility
-        const jobsWithCount = jobs.map(job => {
+        // Map _count.cvs to applicantsCount and handle dynamic expiration status
+        const jobsWithUpdatedStatus = jobs.map((job: any) => {
             const { _count, ...jobData } = job;
+            const now = new Date();
+
+            // Calculate effective expiresAt if missing (legacy jobs)
+            const effectiveExpiresAt = jobData.expiresAt
+                ? new Date(jobData.expiresAt)
+                : new Date(new Date(jobData.postedDate).getTime() + 30 * 24 * 60 * 60 * 1000);
+
+            let status = jobData.status;
+
+            // If the job is ACTIVE but the expiration date has passed, it's effectively EXPIRED
+            if (status === 'ACTIVE' && effectiveExpiresAt < now) {
+                status = 'EXPIRED';
+            }
+
             return {
                 ...jobData,
+                expiresAt: effectiveExpiresAt,
+                status,
                 applicantsCount: _count?.cvs || 0
             };
         });
 
-        res.json(jobsWithCount);
+        res.json(jobsWithUpdatedStatus);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Failed to fetch jobs' });
@@ -46,7 +65,7 @@ export const getJobs = async (req: AuthRequest, res: Response) => {
 };
 
 export const createJob = async (req: AuthRequest, res: Response) => {
-    const { title, description, location, salary, qualifications, skills } = req.body;
+    const { title, description, location, type, salary, qualifications, skills, expiresAt } = req.body;
     const recruiterId = req.user?.id;
 
     if (!recruiterId) return res.status(401).json({ error: 'Unauthorized' });
@@ -59,10 +78,12 @@ export const createJob = async (req: AuthRequest, res: Response) => {
         const jobData: any = {
             title,
             description,
-            location,
-            salary,
+            location: location || "Remote",
+            type: type || "Full-time",
+            salary: salary ? parseFloat(salary) : null,
             recruiterId,
-            status: 'ACTIVE'
+            status: 'ACTIVE',
+            expiresAt: expiresAt ? new Date(expiresAt) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
         };
 
         if (qualifications && Array.isArray(qualifications)) {
@@ -108,8 +129,15 @@ export const getJobById = async (req: Request, res: Response) => {
         if (!job) return res.status(404).json({ error: 'Job not found' });
 
         const { _count, ...jobData } = job;
+
+        // Calculate effective expiresAt if missing (legacy jobs)
+        const effectiveExpiresAt = jobData.expiresAt
+            ? new Date(jobData.expiresAt)
+            : new Date(new Date(jobData.postedDate).getTime() + 30 * 24 * 60 * 60 * 1000);
+
         const jobWithCount = {
             ...jobData,
+            expiresAt: effectiveExpiresAt,
             applicantsCount: _count?.cvs || 0
         };
 

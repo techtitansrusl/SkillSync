@@ -8,7 +8,9 @@ import { PrismaClient } from '@prisma/client';
 import authRoutes from './routes/auth';
 import jobRoutes from './routes/jobs';
 import applicationRoutes from './routes/applications';
+import applicantRoutes from './routes/applicant';
 import aiRoutes from './routes/ai';
+import notificationRoutes from './routes/notifications';
 import logger from './utils/logger';
 
 dotenv.config();
@@ -35,7 +37,9 @@ app.get('/', (req, res) => {
 app.use('/auth', authRoutes);
 app.use('/jobs', jobRoutes);
 app.use('/applications', applicationRoutes);
+app.use('/applicants', applicantRoutes);
 app.use('/ai', aiRoutes);
+app.use('/notifications', notificationRoutes);
 
 app.listen(port, () => {
     logger.info(`Server is running on port ${port}`);

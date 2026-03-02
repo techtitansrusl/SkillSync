@@ -18,3 +18,22 @@
 2026-02-13 09:51:02,910 - skillsync-ai - INFO - Processing job 3f86a888-2343-41a0-99ad-dcf29b4a9d90 with 1 CVs
 2026-02-13 09:52:55,776 - skillsync-ai - INFO - Processing job 3f86a888-2343-41a0-99ad-dcf29b4a9d90 with 2 CVs
 2026-02-13 10:08:35,795 - skillsync-ai - INFO - Processing job 9015e713-b97f-4a3c-b228-34e0907ed01d with 2 CVs
+2026-03-02 12:54:47,318 - skillsync-ai - INFO - AI Service starting up...
+2026-03-02 12:54:48,042 - skillsync-ai - INFO - Loaded trained classifier from D:\SkillSync\skillsyncAI\data\trained_classifier.pkl
+2026-03-02 15:07:30,227 - skillsync-ai - INFO - Processing job cfc79506-3642-4431-a040-486ae11d6cd1 with 1 CVs
+2026-03-02 15:08:37,026 - skillsync-ai - INFO - AI Service starting up...
+2026-03-02 15:08:37,172 - skillsync-ai - INFO - Loaded trained classifier from D:\SkillSync\skillsyncAI\data\trained_classifier.pkl
+2026-03-02 15:09:29,221 - skillsync-ai - INFO - Processing job cfc79506-3642-4431-a040-486ae11d6cd1 with 1 CVs
+2026-03-02 15:09:36,811 - skillsync-ai - INFO - Processing job cfc79506-3642-4431-a040-486ae11d6cd1 with 1 CVs
+2026-03-02 15:34:41,482 - skillsync-ai - INFO - AI Service starting up...
+2026-03-02 15:34:41,617 - skillsync-ai - INFO - Loaded trained classifier from D:\SkillSync\skillsyncAI\data\trained_classifier.pkl
+2026-03-02 15:39:32,963 - skillsync-ai - INFO - Processing job cfc79506-3642-4431-a040-486ae11d6cd1 with 1 CVs
+2026-03-02 15:58:48,005 - skillsync-ai - INFO - Processing job cfc79506-3642-4431-a040-486ae11d6cd1 with 1 CVs
+2026-03-02 15:59:20,470 - skillsync-ai - INFO - Processing job cfc79506-3642-4431-a040-486ae11d6cd1 with 3 CVs
+2026-03-02 17:24:14,279 - skillsync-ai - INFO - Processing job cfc79506-3642-4431-a040-486ae11d6cd1 with 3 CVs
+2026-03-02 17:56:48,294 - skillsync-ai - INFO - Processing job cfc79506-3642-4431-a040-486ae11d6cd1 with 3 CVs
+2026-03-02 17:59:03,676 - skillsync-ai - INFO - Processing job cfc79506-3642-4431-a040-486ae11d6cd1 with 5 CVs
+2026-03-02 18:33:52,332 - skillsync-ai - INFO - Processing job 157b4236-66ea-42da-b355-2a88a4da2e20 with 1 CVs
+2026-03-02 20:51:50,522 - skillsync-ai - INFO - Processing job 828dadc7-1441-47fc-af5e-03e811e0151e with 1 CVs
+2026-03-02 21:07:24,269 - skillsync-ai - INFO - Processing job 602be47f-3bd8-45a6-8d96-bf0be1fafebc with 1 CVs
+2026-03-02 21:08:20,346 - skillsync-ai - INFO - Processing job 602be47f-3bd8-45a6-8d96-bf0be1fafebc with 1 CVs

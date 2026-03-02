@@ -42,8 +42,11 @@ npm install
 cd skillsyncAI
 # Create virtual environment
 python -m venv .venv
+
 # Activate virtual environment
-# Windows:
+# Windows (PowerShell):
+.\.venv\Scripts\Activate.ps1
+# Windows (CMD):
 .venv\Scripts\activate
 # Linux/Mac:
 source .venv/bin/activate
@@ -54,13 +57,13 @@ pip install -r requirements.txt
 
 ## How to Run
 
-To run the full system, you need to start all three services in separate data terminals.
+To run the full system, you need to start all three services in separate terminals.
 
 ### Terminal 1: AI Service (Port 8000)
 ```bash
 cd skillsyncAI
 .\run_server.bat
-# Or manually: uvicorn app:app --reload --host 0.0.0.0 --port 8000
+# Note: This runs the production logic directly from skillsync_ai_core.ipynb
 ```
 
 ### Terminal 2: Backend API (Port 4000)
@@ -78,12 +81,13 @@ npm run dev
 ## Usage
 
 1.  Open your browser and navigate to `http://localhost:3000`.
-2.  **Recruiter Flow**:
+2.  **Role Enforcement**: Choose your role (Applicant/Recruiter) correctly during login. The system strictly verifies your registered role.
+3.  **Recruiter Flow**:
     -   Register as a Recruiter.
     -   Post a new Job (use AI generation for description).
-    -   Bulk upload CVs (PDFs).
-    -   Screen candidates to see AI scores and insights.
-3.  **Applicant Flow**:
+    -   Bulk upload CVs.
+    -   Screen candidates to see AI scores and insights in the **Master AI Notebook** (`skillsync_ai_core.ipynb`).
+4.  **Applicant Flow**:
     -   Register as an Applicant.
-    -   Browse Jobs.
-    -   Apply by uploading a CV.
+    -   Browse Jobs and Apply.
+    -   **Withdrawal**: You can withdraw your application *only* before the AI screening has started. Once a score is assigned, withdrawal is restricted to maintain process integrity.

@@ -8,17 +8,42 @@ datasource db {
 }
 
 model User {
-  id        String     @id @default(uuid()) @map("user_id")
-  name      String
-  email     String     @unique
-  password  String
-  role      Role
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @updatedAt @map("updated_at")
-  applicant Applicant?
-  recruiter Recruiter?
+  id         String     @id @default(uuid()) @map("user_id")
+  name       String
+  email      String     @unique
+  password         String
+  passwordHistory  PasswordHistory[]
+  role             Role
+  isVerified       Boolean           @default(false) @map("is_verified")
+  loginAttempts    Int               @default(0) @map("login_attempts")
+  isLocked         Boolean           @default(false) @map("is_locked")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  applicant        Applicant?
+  recruiter        Recruiter?
+  notifications    Notification[]
 
   @@map("user")
+}
+
+model PasswordHistory {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  password  String   // Hashed password
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("password_history")
+}
+
+model Otp {
+  id        String   @id @default(uuid()) @map("otp_id")
+  email     String
+  code      String
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("otp")
 }
 
 model Recruiter {
@@ -31,10 +56,14 @@ model Recruiter {
 }
 
 model Applicant {
-  id        String  @id @map("user_id")
-  resumeUrl String? @map("resume_url")
-  user      User    @relation(fields: [id], references: [id], onDelete: Cascade)
-  cvs       Cv[]
+  id         String   @id @map("user_id")
+  contact    String?
+  education  String?  @db.Text
+  experience String?  @db.Text
+  skills     String?  @db.Text
+  resumeUrl  String?  @map("resume_url")
+  user       User     @relation(fields: [id], references: [id], onDelete: Cascade)
+  cvs        Cv[]
 
   @@map("applicant")
 }
@@ -46,12 +75,14 @@ model Job {
   salary         Decimal?           @db.Decimal(10, 2)
   description    String?            @db.Text
   location       String?
+  type           String?
   postedDate     DateTime           @default(now()) @map("posted_date")
   status         JobStatus          @default(ACTIVE)
   cvs            Cv[]
   recruiter      Recruiter          @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
   qualifications JobQualification[]
   skills         JobSkill[]
+  expiresAt      DateTime?          @map("expires_at")
 
   @@index([recruiterId], map: "job_description_recruiter_id_fkey")
   @@map("job_description")
@@ -77,32 +108,56 @@ model JobSkill {
 
 model Cv {
   id            String    @id @default(uuid()) @map("cv_id")
-  applicantId   String    @map("applicant_id")
+  applicantId   String?   @map("applicant_id")
   jobId         String    @map("job_id")
   format        String?
   fileName      String?   @map("file_name")
   fileUrl       String?   @map("file_url")
   submittedDate DateTime  @default(now()) @map("submitted_date")
-  applicant     Applicant @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+  applicant     Applicant? @relation(fields: [applicantId], references: [id], onDelete: Cascade)
   job           Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
   result        Result?
+  archivedCvs   ArchivedCv[]
 
-    @@index([applicantId], map: "cv_applicant_id_fkey")
+  @@index([applicantId], map: "cv_applicant_id_fkey")
   @@index([jobId], map: "cv_job_id_fkey")
   @@unique([applicantId, jobId])
   @@map("cv")
+}
+
+model ArchivedCv {
+  id            String   @id @default(uuid()) @map("archived_cv_id")
+  cvId          String   @map("cv_id")
+  fileUrl       String   @map("file_url")
+  fileName      String   @map("file_name")
+  archivedDate  DateTime @default(now()) @map("archived_date")
+  cv            Cv       @relation(fields: [cvId], references: [id], onDelete: Cascade)
+
+  @@map("archived_cv")
 }
 
 model Result {
   id            String   @id @default(uuid()) @map("result_id")
   cvId          String   @unique @map("cv_id")
   processedDate DateTime @default(now()) @map("processed_date")
-  comment       String?
+  comment       String?  @db.Text
   status        String?
   score         Int?
   cv            Cv       @relation(fields: [cvId], references: [id], onDelete: Cascade)
 
   @@map("result")
+}
+
+model Notification {
+  id        String   @id @default(uuid()) @map("notification_id")
+  userId    String   @map("user_id")
+  title     String
+  message   String   @db.Text
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification")
 }
 
 enum Role {
@@ -114,4 +169,5 @@ enum JobStatus {
   ACTIVE
   CLOSED
   DRAFT
+  EXPIRED
 }

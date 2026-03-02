@@ -21,8 +21,28 @@ export const api = {
             const res = await axiosInstance.post('/auth/register', data);
             return res.data;
         },
-        login: async (data: any) => {
-            const res = await axiosInstance.post('/auth/login', data);
+        login: async (credentials: any) => {
+            const res = await axiosInstance.post('/auth/login', credentials);
+            return res.data;
+        },
+        verifyOtp: async (data: { email: string; code: string }) => {
+            const res = await axiosInstance.post('/auth/verify-otp', data);
+            return res.data;
+        },
+        resendOtp: async (email: string) => {
+            const res = await axiosInstance.post('/auth/resend-otp', { email });
+            return res.data;
+        },
+        forgotPassword: async (email: string) => {
+            const res = await axiosInstance.post('/auth/forgot-password', { email });
+            return res.data;
+        },
+        resetPassword: async (data: any) => {
+            const res = await axiosInstance.post('/auth/reset-password', data);
+            return res.data;
+        },
+        changePassword: async (data: any) => {
+            const res = await axiosInstance.post('/auth/change-password', data);
             return res.data;
         }
     },
@@ -32,7 +52,7 @@ export const api = {
             // Normalize backend data (recruiter.companyName) to frontend Job interface (company)
             return res.data.map((job: any) => ({
                 ...job,
-                company: job.recruiter?.companyName || 'Unknown Company'
+                company: (job.recruiter?.companyName && job.recruiter.companyName !== 'Unspecified') ? job.recruiter.companyName : ''
             }));
         },
         getById: async (id: string) => {
@@ -63,6 +83,22 @@ export const api = {
         getByJobId: async (jobId: string) => {
             const res = await axiosInstance.get(`/applications/job/${jobId}`);
             return res.data;
+        },
+        bulkApply: async (formData: FormData) => {
+            const res = await axiosInstance.post('/applications/bulk', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            return res.data;
+        },
+        updateCv: async (id: string, formData: FormData) => {
+            const res = await axiosInstance.put(`/applications/${id}`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            return res.data;
+        },
+        withdraw: async (id: string) => {
+            const res = await axiosInstance.post(`/applications/${id}/withdraw`);
+            return res.data;
         }
     },
     ai: {
@@ -77,6 +113,30 @@ export const api = {
         },
         processCandidates: async (jobId: string) => {
             const res = await axiosInstance.post('/ai/process-candidates', { jobId });
+            return res.data;
+        }
+    },
+    applicants: {
+        getProfile: async () => {
+            const res = await axiosInstance.get('/applicants/profile');
+            return res.data;
+        },
+        updateProfile: async (data: any) => {
+            const res = await axiosInstance.put('/applicants/profile', data);
+            return res.data;
+        },
+        getById: async (id: string) => {
+            const res = await axiosInstance.get(`/applicants/${id}`);
+            return res.data;
+        }
+    },
+    notifications: {
+        getAll: async () => {
+            const res = await axiosInstance.get('/notifications');
+            return res.data;
+        },
+        markAsRead: async (id: string) => {
+            const res = await axiosInstance.patch(`/notifications/${id}/read`);
             return res.data;
         }
     }

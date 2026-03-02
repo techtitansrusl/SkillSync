@@ -3,6 +3,8 @@ import { GoogleGenAI } from "@google/genai";
 import axios from 'axios';
 import { prisma } from '../index';
 import path from 'path';
+import { sendNotification } from '../utils/emailService';
+import { createNotification } from './notificationController';
 
 const apiKey = process.env.API_KEY;
 const AI_SERVICE_URL = 'http://localhost:8000';
@@ -44,7 +46,15 @@ export const processJobCandidates = async (req: Request, res: Response) => {
         // 1. Fetch Job Description
         const job = await prisma.job.findUnique({
             where: { id: jobId },
-            include: { cvs: true } // format, fileName, fileUrl are in CV model
+            include: {
+                cvs: {
+                    include: {
+                        applicant: {
+                            include: { user: { select: { id: true, name: true, email: true } } }
+                        }
+                    }
+                }
+            }
         });
 
         if (!job) {
@@ -111,6 +121,23 @@ export const processJobCandidates = async (req: Request, res: Response) => {
         });
 
         await prisma.$transaction(updatePromises);
+
+        // 5. Trigger Notifications
+        results.forEach((r: any) => {
+            const cv = job.cvs.find(c => c.id === r.cv_id);
+            if (cv?.applicant?.user?.email) {
+                sendNotification(cv.applicant.user.email, 'AI_RESULT_READY', {
+                    userName: cv.applicant.user.name,
+                    jobTitle: job.title,
+                    score: Math.round(r.score)
+                }).catch(err => console.error("Result notification error:", err));
+
+                createNotification(cv.applicant.user.id, 'AI Screening Result', `Your AI match score for "${job.title}" is ready: ${Math.round(r.score)}%`).catch(err => console.error("In-system notification error:", err));
+            }
+        });
+
+        // 6. Notify Recruiter that screening is complete
+        createNotification(job.recruiterId, 'AI Screening Complete', `AI screening for your job "${job.title}" is complete. ${results.length} candidates processed.`).catch(err => console.error("Recruiter in-system notification error:", err));
 
         res.json({ message: "Processing complete", results });
 

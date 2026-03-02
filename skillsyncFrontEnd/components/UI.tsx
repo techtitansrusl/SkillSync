@@ -29,7 +29,7 @@ export const Input: React.FC<InputProps> = ({ label, error, className = '', ...p
     <div className="mb-4">
       {label && <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>}
       <input
-        className={`w-full px-4 py-2 bg-gray-200 border border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-colors ${error ? 'border-red-500' : ''} ${className}`}
+        className={`w-full px-4 py-2 bg-gray-100 text-gray-900 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed ${error ? 'border-red-500' : ''} ${className}`}
         {...props}
       />
       {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
@@ -119,7 +119,12 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
 };
 
 // --- Header ---
-export const Header: React.FC<{ user: any; onLogout: () => void }> = ({ user, onLogout }) => {
+export const Header: React.FC<{
+  user: any;
+  onLogout: () => void;
+  onChangePassword: () => void;
+  notificationNode?: React.ReactNode;
+}> = ({ user, onLogout, onChangePassword, notificationNode }) => {
   return (
     <header className="bg-primary text-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -131,16 +136,85 @@ export const Header: React.FC<{ user: any; onLogout: () => void }> = ({ user, on
         </div>
         <nav className="flex items-center space-x-6">
           <div className="flex items-center space-x-2">
-             <div className="w-8 h-8 rounded-full bg-secondary text-primary font-bold flex items-center justify-center border-2 border-white">
-                {user.name.charAt(0)}
-             </div>
-             <span className="hidden md:block font-medium">{user.name}</span>
+            <div className="w-8 h-8 rounded-full bg-secondary text-primary font-bold flex items-center justify-center border-2 border-white">
+              {user.name.charAt(0)}
+            </div>
+            <span className="hidden md:block font-medium">{user.name}</span>
           </div>
-          <button onClick={onLogout} className="text-white hover:text-secondary transition">
+          {notificationNode}
+          <button onClick={onChangePassword} title="Change Password" className="text-white hover:text-secondary transition">
+            <i className="fa-solid fa-key text-lg"></i>
+          </button>
+          <button onClick={onLogout} title="Logout" className="text-white hover:text-secondary transition">
             <i className="fa-solid fa-right-from-bracket text-lg"></i>
           </button>
         </nav>
       </div>
     </header>
+  );
+};
+
+// --- Change Password Modal ---
+export const ChangePasswordModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: (oldPass: string, newPass: string) => Promise<void>;
+}> = ({ isOpen, onClose, onConfirm }) => {
+  const [oldPass, setOldPass] = React.useState('');
+  const [newPass, setNewPass] = React.useState('');
+  const [confirmPass, setConfirmPass] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+
+  const handleSubmit = async () => {
+    if (newPass !== confirmPass) {
+      return setError("New passwords do not match");
+    }
+    setLoading(true);
+    setError('');
+    try {
+      await onConfirm(oldPass, newPass);
+      onClose();
+      // Reset fields
+      setOldPass('');
+      setNewPass('');
+      setConfirmPass('');
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Failed to update password");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Change Password">
+      <div className="space-y-4 py-4">
+        {error && <div className="p-3 bg-red-50 text-red-600 rounded text-sm border border-red-100">{error}</div>}
+        <Input
+          label="Current Password"
+          type="password"
+          value={oldPass}
+          onChange={(e) => setOldPass(e.target.value)}
+        />
+        <Input
+          label="New Password"
+          type="password"
+          value={newPass}
+          onChange={(e) => setNewPass(e.target.value)}
+        />
+        <Input
+          label="Confirm New Password"
+          type="password"
+          value={confirmPass}
+          onChange={(e) => setConfirmPass(e.target.value)}
+        />
+        <div className="pt-4 flex justify-end gap-3">
+          <Button variant="secondary" onClick={onClose} disabled={loading}>Cancel</Button>
+          <Button onClick={handleSubmit} disabled={loading}>
+            {loading ? 'Updating...' : 'Update Password'}
+          </Button>
+        </div>
+      </div>
+    </Modal>
   );
 };

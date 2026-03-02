@@ -9,6 +9,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  isVerified: boolean;
   avatar?: string;
 }
 
@@ -21,7 +22,8 @@ export interface Job {
   description: string;
   requirements: string[];
   postedDate: string;
-  status: 'Active' | 'Closed' | 'Draft';
+  expiresAt: string;
+  status: 'ACTIVE' | 'CLOSED' | 'DRAFT' | 'EXPIRED';
   applicantsCount: number;
 }
 

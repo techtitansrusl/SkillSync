@@ -16,6 +16,10 @@ export const RecruiterDashboard: React.FC<{ user: User }> = ({ user }) => {
     const [newJobTitle, setNewJobTitle] = useState('');
     const [generatedDesc, setGeneratedDesc] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
+    const [deadline, setDeadline] = useState('');
+    const [jobLocation, setJobLocation] = useState('Remote');
+    const [jobType, setJobType] = useState('Full-time');
+    const [jobSalary, setJobSalary] = useState('');
 
     // Bulk Upload State
     const [showUploadModal, setShowUploadModal] = useState(false);
@@ -26,9 +30,25 @@ export const RecruiterDashboard: React.FC<{ user: User }> = ({ user }) => {
     // AI Screening State
     const [analyzing, setAnalyzing] = useState(false);
 
+    // Profile View State
+    const [viewingProfile, setViewingProfile] = useState<any | null>(null);
+    const [loadingProfile, setLoadingProfile] = useState(false);
+
     useEffect(() => {
         fetchJobs();
     }, []);
+
+    const handleViewProfile = async (applicantId: string) => {
+        setLoadingProfile(true);
+        try {
+            const profileData = await api.applicants.getById(applicantId);
+            setViewingProfile(profileData);
+        } catch (error: any) {
+            alert(error.response?.data?.error || "Failed to fetch candidate profile");
+        } finally {
+            setLoadingProfile(false);
+        }
+    };
 
     useEffect(() => {
         if (selectedJobId) {
@@ -76,9 +96,11 @@ export const RecruiterDashboard: React.FC<{ user: User }> = ({ user }) => {
             await api.jobs.create({
                 title: newJobTitle,
                 company: "My Company",
-                location: "Remote",
-                type: "Full-time",
+                location: jobLocation,
+                type: jobType,
+                salary: jobSalary,
                 description: generatedDesc,
+                expiresAt: deadline || undefined,
                 // requirements extracted or just passed as is
                 qualifications: [],
                 skills: []
@@ -122,15 +144,13 @@ export const RecruiterDashboard: React.FC<{ user: User }> = ({ user }) => {
         setIsUploading(true);
 
         try {
-            // Upload files one by one (Promise.all could be used but we want to avoid timeout on large batches)
-            const promises = Array.from(uploadFiles).map(file => {
-                const formData = new FormData();
-                formData.append('cv', file);
-                formData.append('jobId', uploadJobId);
-                return api.applications.apply(formData);
+            const formData = new FormData();
+            formData.append('jobId', uploadJobId);
+            Array.from(uploadFiles).forEach(file => {
+                formData.append('cvs', file);
             });
 
-            await Promise.all(promises);
+            await api.applications.bulkApply(formData);
 
             alert(`Successfully uploaded ${uploadFiles.length} CVs.`);
             setShowUploadModal(false);
@@ -196,6 +216,7 @@ export const RecruiterDashboard: React.FC<{ user: User }> = ({ user }) => {
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applicants</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Posted Date</th>
+                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry Date</th>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                         </tr>
                                     </thead>
@@ -217,6 +238,9 @@ export const RecruiterDashboard: React.FC<{ user: User }> = ({ user }) => {
                                                     </div>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(job.postedDate).toLocaleDateString()}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-orange-600 font-medium">
+                                                    {job.expiresAt ? new Date(job.expiresAt).toLocaleString() : 'N/A'}
+                                                </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     <div className="flex justify-end gap-2">
                                                         <Button
@@ -339,6 +363,14 @@ export const RecruiterDashboard: React.FC<{ user: User }> = ({ user }) => {
                                                         </span>
                                                     </div>
                                                     <div className="flex gap-2">
+                                                        <Button
+                                                            variant="primary"
+                                                            className="text-xs px-3 py-1"
+                                                            onClick={() => handleViewProfile(candidate.applicantId)}
+                                                            disabled={loadingProfile}
+                                                        >
+                                                            {loadingProfile ? '...' : 'View Profile'}
+                                                        </Button>
                                                         <Button variant="outline" className="text-xs px-3 py-1" onClick={() => window.open(`http://localhost:4000${candidate.fileUrl}`, '_blank')}>
                                                             View CV
                                                         </Button>
@@ -381,6 +413,45 @@ export const RecruiterDashboard: React.FC<{ user: User }> = ({ user }) => {
                         onChange={(e) => setGeneratedDesc(e.target.value)}
                     ></textarea>
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Input
+                            label="Location"
+                            placeholder="e.g. Remote, New York, Hybrid"
+                            value={jobLocation}
+                            onChange={(e) => setJobLocation(e.target.value)}
+                        />
+                        <div className="flex flex-col">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Job Type</label>
+                            <select
+                                className="w-full px-4 py-2 bg-gray-100 border border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-primary outline-none text-sm h-[42px]"
+                                value={jobType}
+                                onChange={(e) => setJobType(e.target.value)}
+                            >
+                                <option value="Full-time">Full-time</option>
+                                <option value="Part-time">Part-time</option>
+                                <option value="Contract">Contract</option>
+                                <option value="Freelance">Freelance</option>
+                                <option value="Internship">Internship</option>
+                            </select>
+                        </div>
+                        <Input
+                            label="Salary (Monthly)"
+                            placeholder="e.g. 10000"
+                            type="number"
+                            value={jobSalary}
+                            onChange={(e) => setJobSalary(e.target.value)}
+                        />
+                        <Input
+                            label="Expiration Deadline (Optional)"
+                            type="datetime-local"
+                            value={deadline}
+                            onChange={(e) => setDeadline(e.target.value)}
+                        />
+                    </div>
+                    <p className="text-xs text-gray-500 italic">
+                        * Deadline defaults to 30 days from now if left empty.
+                    </p>
+
                     <Button className="w-full mt-4" onClick={handlePostJob}>Post Job</Button>
                 </div>
             </Modal>
@@ -421,6 +492,59 @@ export const RecruiterDashboard: React.FC<{ user: User }> = ({ user }) => {
                         >
                             {isUploading ? 'Uploading...' : 'Confirm Upload'}
                         </Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* View Profile Modal */}
+            <Modal
+                isOpen={!!viewingProfile}
+                onClose={() => setViewingProfile(null)}
+                title={`Profile: ${viewingProfile?.name}`}
+            >
+                <div className="space-y-6 py-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <p className="text-xs text-gray-500 uppercase font-bold">Full Name</p>
+                            <p className="text-gray-900">{viewingProfile?.name}</p>
+                        </div>
+                        <div>
+                            <p className="text-xs text-gray-500 uppercase font-bold">Contact</p>
+                            <p className="text-gray-900">{viewingProfile?.contact || 'Not provided'}</p>
+                        </div>
+                        <div className="col-span-2">
+                            <p className="text-xs text-gray-500 uppercase font-bold">Email</p>
+                            <p className="text-gray-900">{viewingProfile?.email}</p>
+                        </div>
+                    </div>
+
+                    <div className="border-t pt-4">
+                        <p className="text-xs text-gray-500 uppercase font-bold mb-2">Education</p>
+                        <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-700 whitespace-pre-wrap">
+                            {viewingProfile?.education || 'No education details provided.'}
+                        </div>
+                    </div>
+
+                    <div className="border-t pt-4">
+                        <p className="text-xs text-gray-500 uppercase font-bold mb-2">Experience</p>
+                        <div className="bg-gray-50 p-3 rounded-lg text-sm text-gray-700 whitespace-pre-wrap">
+                            {viewingProfile?.experience || 'No experience details provided.'}
+                        </div>
+                    </div>
+
+                    <div className="border-t pt-4">
+                        <p className="text-xs text-gray-500 uppercase font-bold mb-2">Skills</p>
+                        <div className="flex flex-wrap gap-2">
+                            {viewingProfile?.skills ? viewingProfile.skills.split(',').map((skill: string, i: number) => (
+                                <span key={i} className="bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded">
+                                    {skill.trim()}
+                                </span>
+                            )) : <span className="text-gray-400 text-sm">No skills listed</span>}
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end pt-4">
+                        <Button variant="secondary" onClick={() => setViewingProfile(null)}>Close</Button>
                     </div>
                 </div>
             </Modal>
