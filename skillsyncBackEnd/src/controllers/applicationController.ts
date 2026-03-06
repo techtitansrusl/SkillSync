@@ -152,13 +152,19 @@ export const updateCv = async (req: AuthRequest, res: Response) => {
 
     try {
         const cv = await prisma.cv.findUnique({
-            where: { id }
+            where: { id },
+            include: { result: true }
         });
 
         if (!cv) return res.status(404).json({ error: 'CV not found' });
 
         if (cv.applicantId !== userId) {
             return res.status(403).json({ error: 'Unauthorized to update this CV' });
+        }
+
+        // Block if screening has already happened
+        if (cv.result && cv.result.status?.toLowerCase() !== 'withdrawn') {
+            return res.status(400).json({ error: 'Cannot update CV after screening has been completed.' });
         }
 
         const newFileUrl = `/uploads/cvs/${req.file.filename}`;
@@ -237,7 +243,7 @@ export const withdrawApplication = async (req: AuthRequest, res: Response) => {
 
         // Block if screening has occurred (Result record exists and isn't already Withdrawn)
         if (cv.result && cv.result.status?.toLowerCase() !== 'withdrawn') {
-            return res.status(400).json({ error: 'Cannot withdraw an application after screening has started or a score has been assigned.' });
+            return res.status(400).json({ error: 'Cannot withdraw an application after screening has been completed.' });
         }
 
         const currentStatus = cv.result?.status?.toLowerCase() || 'pending';

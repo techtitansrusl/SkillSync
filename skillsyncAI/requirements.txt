@@ -7,3 +7,10 @@ pdfplumber
 scikit-learn
 pandas
 joblib
+nltk
+aif360
+pytesseract
+python-multipart
+ipywidgets
+ipykernel
+notebook

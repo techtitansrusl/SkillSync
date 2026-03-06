@@ -59,11 +59,11 @@ pip install -r requirements.txt
 
 To run the full system, you need to start all three services in separate terminals.
 
-### Terminal 1: AI Service (Port 8000)
+### Terminal 1: AI Service (Port 8001)
 ```bash
 cd skillsyncAI
 .\run_server.bat
-# Note: This runs the production logic directly from skillsync_ai_core.ipynb
+# Note: This runs the production logic from skillsync_ai_compliant.py generated from skillsync_ai_core_v2.ipynb
 ```
 
 ### Terminal 2: Backend API (Port 4000)
@@ -86,7 +86,7 @@ npm run dev
     -   Register as a Recruiter.
     -   Post a new Job (use AI generation for description).
     -   Bulk upload CVs.
-    -   Screen candidates to see AI scores and insights in the **Master AI Notebook** (`skillsync_ai_core.ipynb`).
+    -   Screen candidates to see AI scores and insights in the **Master AI Notebook** (`skillsync_ai_core_v2.ipynb`).
 4.  **Applicant Flow**:
     -   Register as an Applicant.
     -   Browse Jobs and Apply.

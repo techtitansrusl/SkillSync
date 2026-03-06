@@ -4,6 +4,8 @@ const prisma = new PrismaClient();
 async function reset() {
     console.log("Cleaning all data from the database...");
     try {
+        await prisma.passwordHistory.deleteMany();
+        await prisma.notification.deleteMany();
         await prisma.otp.deleteMany();
         await prisma.result.deleteMany();
         await prisma.cv.deleteMany();
